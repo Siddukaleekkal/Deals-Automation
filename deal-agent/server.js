@@ -58,13 +58,14 @@ Fields to extract:
 - Email (email address)
 - Job_Date_and_Time (date/time as string)
 - Address (full address)
-- Service (type of service e.g. "House Washing", "Driveway Cleaning")
+- Service (the service requested — extract exactly what they say, e.g. "house wash", "window cleaning + driveway", etc.)
 - Note (any extra notes)
-- Stage (default to "Quoted1" if not mentioned)
+- Stage (must be exactly one of: "Quoted", "Scheduled", "Completed", "Past Customer" — default to "Quoted" if not mentioned)
+- Owner (the person assigned to this deal — look for names like "dom", "christian", or "omar" — extract the name if mentioned)
 - Invoice_Total (number only, if mentioned separately from Amount)
 
 If a field is not mentioned, omit it from the JSON.
-Example output: {"Deal_Name":"John Smith","Amount":500,"Phone":"555-1234","Address":"123 Main St","Service":"House Washing","Stage":"Quoted1"}`,
+Example output: {"Deal_Name":"John Smith","Amount":500,"Phone":"555-1234","Address":"123 Main St","Service":"House Washing","Stage":"Quoted"}`,
       messages: [{ role: "user", content: message }],
     }),
   });
@@ -94,19 +95,54 @@ async function createZohoDeal(dealData) {
   const zohoData = {
     Deal_Name: dealData.Deal_Name,
     Pipeline: "Power Washing Jobs",
-    Stage: dealData.Stage || "Quoted1",
+    Stage: dealData.Stage || "Quoted",
   };
 
   if (dealData.Amount) zohoData.Amount = dealData.Amount;
   if (dealData.Phone) zohoData.Phone = dealData.Phone;
   if (dealData.Email) zohoData.Email = dealData.Email;
   if (dealData.Address) zohoData.Address = dealData.Address;
-  if (dealData.Service) zohoData.Service = dealData.Service;
   if (dealData.Invoice_Total) zohoData.Invoice_Total = dealData.Invoice_Total;
 
-  // Combine job date and notes into Note field (avoids Zoho datetime format issues)
+  // Valid Zoho service options (case-insensitive match)
+  const validServices = [
+    "House Wash",
+    "Driveway Wash",
+    "Roof Wash",
+    "Fence Wash",
+    "Window Cleaning",
+    "Deck/Patio Wash",
+    "Gutter Cleaning",
+    "Driveway Sealing",
+    "House Wash + Gutter Cleaning",
+    "Seal Coating",
+    "Other (add notes)",
+  ];
+
   const noteParts = [];
-  if (dealData.Job_Date_and_Time) noteParts.push(`Job Date: ${dealData.Job_Date_and_Time}`);
+
+  if (dealData.Service) {
+    const match = validServices.find(
+      s => s.toLowerCase() === dealData.Service.toLowerCase()
+    );
+    if (match) {
+      zohoData.Service = match; // exact Zoho value
+    } else {
+      zohoData.Service = "Other (add notes)";
+      noteParts.push(`Service: ${dealData.Service}`);
+    }
+  }
+
+  // Match owner name (case-insensitive)
+  if (dealData.Owner) {
+    const owners = ["Dom", "Christian", "Omar"];
+    const ownerMatch = owners.find(
+      o => o.toLowerCase() === dealData.Owner.toLowerCase()
+    );
+    if (ownerMatch) zohoData.Owner = { name: ownerMatch };
+  }
+
+  if (dealData.Job_Date_and_Time) zohoData.Job_Date_and_Time = dealData.Job_Date_and_Time;
   if (dealData.Note) noteParts.push(dealData.Note);
   if (noteParts.length > 0) zohoData.Note = noteParts.join(" | ");
 
@@ -145,7 +181,7 @@ app.post("/whatsapp", async (req, res) => {
       (dealData.Address ? `📍 ${dealData.Address}\n` : "") +
       (dealData.Service ? `🔧 ${dealData.Service}\n` : "") +
       (dealData.Job_Date_and_Time ? `📅 ${dealData.Job_Date_and_Time}\n` : "") +
-      `🏷️ Stage: ${dealData.Stage || "Quoted1"}\n\n` +
+      `🏷️ Stage: ${dealData.Stage || "Quoted"}\n\n` +
       `Zoho Deal ID: ${result.id}`;
   } catch (err) {
     console.error("Error:", err.message);
