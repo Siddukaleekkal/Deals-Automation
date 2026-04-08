@@ -134,15 +134,11 @@ async function createZohoDeal(dealData) {
     }
   }
 
-  // Match lead owner by name and assign their Zoho email
+  // Match lead owner name (case-insensitive)
   if (dealData.Lead_Owner) {
-    const ownerMap = {
-      "dom":      "dom@wizardwashva.com",
-      "christian":"christian@wizardwashva.com",
-      "omar":     "omar@wizardwashva.com",
-    };
-    const ownerEmail = ownerMap[dealData.Lead_Owner.toLowerCase()];
-    if (ownerEmail) zohoData.Lead_Owner = ownerEmail;
+    const owners = ["Dom", "Christian", "Omar"];
+    const match = owners.find(o => o.toLowerCase() === dealData.Lead_Owner.toLowerCase());
+    if (match) zohoData.Lead_Owner = match;
   }
 
   if (dealData.Job_Date_and_Time) zohoData.Job_Date_and_Time = dealData.Job_Date_and_Time;
