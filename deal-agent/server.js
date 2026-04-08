@@ -56,7 +56,7 @@ Fields to extract:
 - Amount (number only, no $ sign)
 - Phone (phone number)
 - Email (email address)
-- Job_Date_and_Time (date/time as string)
+- Job_Date_and_Time (convert the date/time to ISO 8601 format: "yyyy-MM-ddTHH:mm:ssZ" — today is 2026-04-08, use this to calculate relative dates like "next Tuesday" or "Friday". If no time given, default to 09:00:00. Example: "next Tuesday 9am" → "2026-04-14T09:00:00Z", "April 16th" → "2026-04-16T09:00:00Z")
 - Address (full address)
 - Service (the service requested — extract exactly what they say, e.g. "house wash", "window cleaning + driveway", etc.)
 - Note (any extra notes)
