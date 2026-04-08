@@ -61,7 +61,7 @@ Fields to extract:
 - Service (the service requested — extract exactly what they say, e.g. "house wash", "window cleaning + driveway", etc.)
 - Note (any extra notes)
 - Stage (must be exactly one of: "Quoted", "Scheduled", "Completed", "Past Customer" — default to "Quoted" if not mentioned)
-- Owner (the person assigned to this deal — look for names like "dom", "christian", or "omar" — extract the name if mentioned)
+- Lead_Owner (the lead owner — if "dom", "christian", or "omar" appears anywhere in the message, extract it as the lead owner. Case insensitive. No need for "lead owner" prefix — just the name alone is enough.)
 - Invoice_Total (number only, if mentioned separately from Amount)
 
 If a field is not mentioned, omit it from the JSON.
@@ -96,6 +96,7 @@ async function createZohoDeal(dealData) {
     Deal_Name: dealData.Deal_Name,
     Pipeline: "Power Washing Jobs",
     Stage: dealData.Stage || "Quoted",
+    Owner: { email: "omar@wizardwashva.com" }, // Deal Owner always Omar Elshami
   };
 
   if (dealData.Amount) zohoData.Amount = dealData.Amount;
@@ -133,13 +134,15 @@ async function createZohoDeal(dealData) {
     }
   }
 
-  // Match owner name (case-insensitive)
-  if (dealData.Owner) {
-    const owners = ["Dom", "Christian", "Omar"];
-    const ownerMatch = owners.find(
-      o => o.toLowerCase() === dealData.Owner.toLowerCase()
-    );
-    if (ownerMatch) zohoData.Owner = { name: ownerMatch };
+  // Match lead owner by name and assign their Zoho email
+  if (dealData.Lead_Owner) {
+    const ownerMap = {
+      "dom":      "dom@wizardwashva.com",
+      "christian":"christian@wizardwashva.com",
+      "omar":     "omar@wizardwashva.com",
+    };
+    const ownerEmail = ownerMap[dealData.Lead_Owner.toLowerCase()];
+    if (ownerEmail) zohoData.Lead_Owner = { email: ownerEmail };
   }
 
   if (dealData.Job_Date_and_Time) zohoData.Job_Date_and_Time = dealData.Job_Date_and_Time;
