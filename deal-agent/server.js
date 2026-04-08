@@ -102,9 +102,13 @@ async function createZohoDeal(dealData) {
   if (dealData.Email) zohoData.Email = dealData.Email;
   if (dealData.Address) zohoData.Address = dealData.Address;
   if (dealData.Service) zohoData.Service = dealData.Service;
-  if (dealData.Note) zohoData.Note = dealData.Note;
-  if (dealData.Job_Date_and_Time) zohoData.Job_Date_and_Time = dealData.Job_Date_and_Time;
   if (dealData.Invoice_Total) zohoData.Invoice_Total = dealData.Invoice_Total;
+
+  // Combine job date and notes into Note field (avoids Zoho datetime format issues)
+  const noteParts = [];
+  if (dealData.Job_Date_and_Time) noteParts.push(`Job Date: ${dealData.Job_Date_and_Time}`);
+  if (dealData.Note) noteParts.push(dealData.Note);
+  if (noteParts.length > 0) zohoData.Note = noteParts.join(" | ");
 
   const res = await fetch("https://www.zohoapis.com/crm/v3/Deals", {
     method: "POST",
