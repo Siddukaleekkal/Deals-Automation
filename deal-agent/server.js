@@ -142,7 +142,7 @@ async function createZohoDeal(dealData) {
       "omar":     "omar@wizardwashva.com",
     };
     const ownerEmail = ownerMap[dealData.Lead_Owner.toLowerCase()];
-    if (ownerEmail) zohoData.Lead_Owner = { email: ownerEmail };
+    if (ownerEmail) zohoData.Lead_Owner = ownerEmail;
   }
 
   if (dealData.Job_Date_and_Time) zohoData.Job_Date_and_Time = dealData.Job_Date_and_Time;
