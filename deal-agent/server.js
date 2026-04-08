@@ -45,7 +45,7 @@ async function parseDealFromMessage(message) {
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-5",
       max_tokens: 1000,
       system: `You are a data extraction assistant for a power washing business. 
 Extract deal information from a casual text message and return ONLY valid JSON.
@@ -70,8 +70,20 @@ Example output: {"Deal_Name":"John Smith","Amount":500,"Phone":"555-1234","Addre
   });
 
   const data = await response.json();
+  
+  // Log full response for debugging
+  console.log("Anthropic response status:", response.status);
+  console.log("Anthropic response:", JSON.stringify(data));
+
+  if (data.error) throw new Error("Anthropic API error: " + data.error.message);
+  if (!data.content || !data.content[0]) throw new Error("Anthropic returned empty response: " + JSON.stringify(data));
+  
   const text = data.content[0].text.trim();
-  return JSON.parse(text);
+  console.log("Parsed text:", text);
+  
+  // Strip markdown code fences if present
+  const clean = text.replace(/```json|```/g, "").trim();
+  return JSON.parse(clean);
 }
 
 // ─── Create Deal in Zoho CRM ─────────────────────────────────────────────────
